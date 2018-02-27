@@ -51,3 +51,35 @@ console.log(Timer.getResultS('a'));       // Return duration seconds of timer A
 console.log(Timer.getResultMS('b'));      // Return duration milliseconds of timer B
 ```
 
+Lap timer
+
+```js
+const Timer = require('timer');
+
+Timer.start();                            // Start the timer
+
+/* running your code */
+
+Timer.lap();                              // lap the timer
+
+/* running your code */
+
+Timer.lap();                              // lap the timer
+
+/* running your code */
+
+Timer.lap();                              // lap the timer
+
+/* running your code */
+
+Timer.stop();                             // Stop the timer
+
+Timer.print();                             // Print the laps and duration
+
+console.log(Timer.getResult());            // Return ISO-8601 format of laps and duration
+console.log(Timer.getResultISO8601());     // Return ISO-8601 format of laps and duration
+
+console.log(Timer.getResultS());           // Return seconds format of laps and duration
+console.log(Timer.getResultMS());          // Return milliseconds format of laps and duration
+```
+

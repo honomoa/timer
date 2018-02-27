@@ -1,5 +1,6 @@
 'use strict';
 
+const _ = require('lodash');
 const moment = require('moment');
 
 function _isStarted(name) {
@@ -31,6 +32,25 @@ function _checkTimerUsage(name) {
   }
 }
 
+function _diffStartEnd(timer) {
+  return timer.end.diff(timer.start);
+}
+
+function _getLapsTime(timer) {
+  let timeseqs = _.concat(timer.start, timer.laps, timer.end);
+  let laps = [];
+  for (let i = timeseqs.length - 1; i > 0 ; --i) {
+    let timeseq = timeseqs[i];
+    let nextTimeseq = timeseqs[i - 1];
+    laps.push(timeseq.diff(nextTimeseq));
+  }
+  return laps;
+}
+
+function _padSpaceTo8(str) {
+  return _.padEnd(`${str}`, 8, ' ');
+}
+
 class Timer {
   constructor(name) {
     this.name = _getDefaultName.call(this, name);
@@ -44,12 +64,26 @@ class Timer {
     let st = moment();
     if (!_isStarted.call(this, name)) {
       this.timers[name] = {
-        start: st
+        start: st,
+        laps: []
       };
     } else {
       throw new Error(`Timer[${name}] is already start.`);
     }
-    this.logger(`Timer[${name}] start at`, st.format('YYYY/MM/DD HH:mm:ss'));
+    this.logger(`Timer[${name}] ${_padSpaceTo8(`start`)} at`, st.format('YYYY/MM/DD HH:mm:ss'));
+  }
+
+  lap(name) {
+    name = _getDefaultName.call(this, name);
+    let lt = moment();
+    if (!_isStarted.call(this, name)) {
+      throw new Error(`Timer[${name}] is not start.`);
+    }
+    if (_isStopped.call(this, name)) {
+      throw new Error(`Timer[${name}] is already end.`);
+    }
+    this.timers[name].laps.push(lt);
+    this.logger(`Timer[${name}] ${_padSpaceTo8(`lap${_.size(this.timers[name].laps)}`)} at`, lt.format('YYYY/MM/DD HH:mm:ss'));
   }
 
   stop(name) {
@@ -62,7 +96,7 @@ class Timer {
       throw new Error(`Timer[${name}] is already end.`);
     }
     this.timers[name].end = et;
-    this.logger(`Timer[${name}] stop  at`, et.format('YYYY/MM/DD HH:mm:ss'));
+    this.logger(`Timer[${name}] ${_padSpaceTo8(`end`)} at`, et.format('YYYY/MM/DD HH:mm:ss'));
   }
 
   clear(name) {
@@ -76,29 +110,60 @@ class Timer {
 
   print(name) {
     name = _getDefaultName.call(this, name);
-    this.logger(`Timer[${name}] duration`, this.show(name));
+
+    if (_.size(this.timers[name].laps) > 0) {
+      let lapsTime = _getLapsTime.call(this, (this.timers[name]));
+      _.forEach(lapsTime, (lapTime, idx0) => {
+        this.logger(`Timer[${name}] ${_padSpaceTo8(`lap${idx0 + 1}`)}`, `${moment.duration(lapTime).toISOString()}`);
+      });
+    }
+    this.logger(`Timer[${name}] ${_padSpaceTo8(`duration`)}`, `${moment.duration(_diffStartEnd(this.timers[name])).toISOString()}`);
   }
 
-  show(name) {
-    return this.showISO8601(name);
+  getResult(name) {
+    return this.getResultISO8601(name);
   }
 
-  showISO8601(name) {
+  getResultISO8601(name) {
     name = _getDefaultName.call(this, name);
     _checkTimerUsage.call(this, name);
-    return `${moment.duration(this.timers[name].end.diff(this.timers[name].start)).toISOString()}`;
+    let ret = {};
+    if (_.size(this.timers[name].laps) > 0) {
+      let lapsTime = _getLapsTime.call(this, (this.timers[name]));
+      _.forEach(lapsTime, (lapTime, idx0) => {
+        ret[`lap${idx0 + 1}`] = moment.duration(lapTime).toISOString();
+      });
+    }
+    ret[`duration`] = moment.duration(_diffStartEnd(this.timers[name])).toISOString();
+    return ret;
   }
 
-  showS(name) {
+  getResultS(name) {
     name = _getDefaultName.call(this, name);
     _checkTimerUsage.call(this, name);
-    return `${this.timers[name].end.diff(this.timers[name].start, 'seconds', true)}s`;
+    let ret = {};
+    if (_.size(this.timers[name].laps) > 0) {
+      let lapsTime = _getLapsTime.call(this, (this.timers[name]));
+      _.forEach(lapsTime, (lapTime, idx0) => {
+        ret[`lap${idx0 + 1}`] = moment.duration(lapTime).asSeconds();
+      });
+    }
+    ret[`duration`] = moment.duration(_diffStartEnd(this.timers[name])).asSeconds();
+    return ret;
   }
 
-  showMS(name) {
+  getResultMS(name) {
     name = _getDefaultName.call(this, name);
     _checkTimerUsage.call(this, name);
-    return `${this.timers[name].end.diff(this.timers[name].start, 'milliseconds', true)}ms`;
+    let ret = {};
+    if (_.size(this.timers[name].laps) > 0) {
+      let lapsTime = _getLapsTime.call(this, (this.timers[name]));
+      _.forEach(lapsTime, (lapTime, idx0) => {
+        ret[`lap${idx0 + 1}`] = moment.duration(lapTime).asMilliseconds();
+      });
+    }
+    ret[`duration`] = moment.duration(_diffStartEnd(this.timers[name])).asMilliseconds();
+    return ret;
   }
 }
 
