@@ -1,6 +1,6 @@
 {
   "name": "timer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Simple timer for trace code execution time",
   "main": "index.js",
   "scripts": {
