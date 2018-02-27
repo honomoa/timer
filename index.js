@@ -39,7 +39,7 @@ function _diffStartEnd(timer) {
 function _getLapsTime(timer) {
   let timeseqs = _.concat(timer.start, timer.laps, timer.end);
   let laps = [];
-  for (let i = timeseqs.length - 1; i > 0 ; --i) {
+  for (let i = timeseqs.length - 2; i > 0 ; --i) {
     let timeseq = timeseqs[i];
     let nextTimeseq = timeseqs[i - 1];
     laps.push(timeseq.diff(nextTimeseq));
